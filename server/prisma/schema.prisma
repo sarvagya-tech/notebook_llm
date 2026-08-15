@@ -22,6 +22,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  workspaces    Workspace[]
 
   @@unique([email])
   @@map("user")
@@ -73,4 +74,55 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+model Workspace {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  icon         String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  defaultmodel String   @default("gpt-4o-mini")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sources      Source[]
+
+    @@index([userId])
+    @@map("workspace")
+}
+
+enum SourceType {
+  PDF
+  WEBSITE
+  YOUTUBE
+  TEXT
+  MARKDOWN
+}
+
+enum SourceStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+
+model Source{
+  id String @id @default(cuid())
+  title String
+  content String?
+  workspaceId String
+  type SourceType
+  status SourceStatus
+  url String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  workspace Workspace @relation(fields: [workspaceId],references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([workspaceId, type])
+  @@index([workspaceId, status])
+  @@map("source")
+
 }
