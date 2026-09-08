@@ -50,7 +50,7 @@ return parsed.data;
 }
 
 const listWorkspaces = (req,res)=>{
-    const userId = req.session.user.id,
+    const userId = req.session.user.id
 
     const workspaces = listWorkspacesByUser(userId);
     res.json(workspaces);
@@ -59,7 +59,7 @@ const listWorkspaces = (req,res)=>{
 
 const getWorkspace = (req,res)=>{
     const {workspaceId} = parseWorkspaceId(req.params);
-    const workspace = await getWorkspaceByIdForUser({
+    const workspace =  getWorkspaceByIdForUser({
         workspaceId : workspaceId,
         userId : req.session.user.id
     });
