@@ -64,3 +64,7 @@ export const importWebSearchSchema = z.object({
     content: z.string().trim().min(1),
     url: z.string().trim().url(),
 });
+export const createSourceSchema = z.discriminatedUnion("type", [
+    createTextSourceSchema,
+    createMarkdownSourceSchema,
+]);
