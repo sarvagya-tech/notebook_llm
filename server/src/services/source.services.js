@@ -1,5 +1,7 @@
+
 import { uploadPdfToCloudinary } from "../lib/cloudinary";
 import { scrapeWebsite } from "../lib/firecrawl";
+import { fetchYoutubeTranscript } from "../lib/youtube";
 import { createSourceRecord,
     updateSourceRecord,
     findSourceById,
@@ -64,5 +66,72 @@ const importWebsiteSource = async (workspaceId,userId,data)=>{
     return websiteSource;
 
 }
+
+const uploadPdfSource = async(workspaceId,userId,file,title)=>{
+    const workspace = await getWorkspaceByIdForUser(workspaceId,userId);
+
+    const upload = await uploadPdfToCloudinary(file.buffer,file.originalname);
+
+    let content = null;
+    let pageCount;
+
+    try {
+        const extracted = await extractPdfFromBuffer(file.buffer);
+        content = extracted.text;
+        pageCount = extracted.pageCount;
+    } catch {
+        // Inngest will retry extraction from Cloudinary if upload-time parse fails.
+    }
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "PDF",
+        title: title?.trim() || file.originalname.replace(/\.pdf$/i, ""),
+        content,
+        status: "PENDING",
+        metadata: {
+            fileUrl: upload.secureUrl,
+            fileName: upload.originalFilename,
+            fileSize: upload.bytes,
+            publicId: upload.publicId,
+            resourceType: upload.resourceType,
+            pageCount,
+        },
+    });
+}
+
+const importYoutubeSource = async(workspaceId,userId,input)=>{
+
+    const workspace = await getWorkspaceByIdForUser(workspaceId,userId);
+
+    const transcript  = await fetchYoutubeTranscript(input.url);
+
+    const source = await createAndProcessSource(
+        {
+            workspaceId,
+            title : input.url || `Youtube : ${transcript.videoId}`,
+            content : transcript.content,
+            url : input.url,
+            status : "PENDING",
+            metadata:{
+                videoId : transcript.videoId
+            }
+        }
+    )
+    return source;
+}
+
+export {
+    importYoutubeSource,
+    uploadPdfSource,
+    importWebsiteSource,
+    bulkDeleteSourcesForWorkspace,
+    getSourceForWorkspace,
+    listSourcesForWorkspace,
+    deleteSourceForWorkspace,
+
+
+}
+
 
 
